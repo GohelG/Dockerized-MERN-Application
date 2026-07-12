@@ -1,38 +1,43 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: profile-service
+  name: hello-service
   labels:
-    {{- include "microservice-app.labels" . | nindent 4 }}
+    app: hello-service
 spec:
-  replicas: {{ .Values.profileService.replicaCount }}
+  replicas: 1
   selector:
     matchLabels:
-      app: profile-service
+      app: hello-service
   template:
     metadata:
       labels:
-        app: profile-service
+        app: hello-service
     spec:
       containers:
-        - name: profile-service
-          image: "{{ .Values.global.registry }}/profile-service:{{ .Values.global.tag }}"
+        - name: hello-service
+          # Dynamically injected from your Jenkinsfile environment blocks
+          image: "{{ .Values.global.registry }}/hello-service:{{ .Values.global.tag }}"
           imagePullPolicy: Always
           ports:
-            - containerPort: {{ .Values.profileService.port }}
+            - containerPort: 5001
           env:
             - name: PORT
-              value: "{{ .Values.profileService.port }}"
+              value: "5001"
             - name: MONGO_URI
-              value: "{{ .Values.global.mongoUri }}"
+              valueFrom:
+                secretKeyRef:
+                  name: mern-app-secrets
+                  key: MONGO_URI
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: profile-service-svc
+  name: hello-service-svc
 spec:
   ports:
-    - port: 5002
-      targetPort: {{ .Values.profileService.port }}
+    - port: 5001
+      targetPort: 5001
   selector:
-    app: profile-service
+    app: hello-service
+

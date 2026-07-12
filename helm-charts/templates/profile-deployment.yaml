@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: profile-service
+  labels:
+    {{- include "microservice-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.profileService.replicaCount }}
+  selector:
+    matchLabels:
+      app: profile-service
+  template:
+    metadata:
+      labels:
+        app: profile-service
+    spec:
+      containers:
+        - name: profile-service
+          image: "{{ .Values.global.registry }}/profile-service:{{ .Values.global.tag }}"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.profileService.port }}
+          env:
+            - name: PORT
+              value: "{{ .Values.profileService.port }}"
+            - name: MONGO_URI
+              value: "{{ .Values.global.mongoUri }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: profile-service-svc
+spec:
+  ports:
+    - port: 5002
+      targetPort: {{ .Values.profileService.port }}
+  selector:
+    app: profile-service
